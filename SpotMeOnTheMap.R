@@ -1,7 +1,11 @@
+##Taxi in Porto
+##loading data
 setwd("/Users/6chaoran/Dropbox/kaggle/taxi")
 library(readr)
 test=read_csv('test.csv.zip')
 polyline=test$POLYLINE
+
+##transform POLYLINE string
 getCoord=function(x){
 	x=gsub('[/[]','',x)
 	x=gsub(']','',x)
@@ -15,6 +19,7 @@ getCoord=function(x){
 	df$status[nrow(df)]='dropoff'
 	return(df)
 }
+
 ##create a matrix of coordinate of the taxi location
 loc=NULL
 for (i in 1:length(polyline)){
@@ -45,16 +50,21 @@ geom_jitter(aes(lon,lat,colour=factor(status)),data=loc[loc$status!='moving',],a
 dev.off()
 
 
+##Crime in San Fansisco
+##loading data
 setwd("~/Dropbox/kaggle/San Fransico Crime Classification")
 library(readr)
 data=read_csv('train.csv.zip',col_types=list(Dates=col_datetime(format='%Y-%m-%d %H:%M:%S')))
 library(lubridate)
 data$Year=year(data$Dates)
+
+##get data from Year 2014 only
 data_2014=data[data$Year==2014,]
 data0=data[1,]
 Crime=data.frame(table(data_2014$Category))
 Crime=Crime[order(Crime$Freq,decreasing=T),]
 Top3=Crime[c(1,4,5),1]
+
 
 library(ggmap)
 map=get_map(location='San Fransico',maptype='roadmap',zoom=12)

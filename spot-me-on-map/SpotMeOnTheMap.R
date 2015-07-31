@@ -41,13 +41,11 @@ centers=rbind(pickup_centers,dropoff_centers)
 library(ggmap)
 map=get_map(location=c(lon=median(loc$lon),lat=median(loc$lat)),
 	maptype='roadmap',zoom=13)
-
-png('Porto_Taxi.png',width=1200,height=800,units='px')
-ggmap(map)+labs(x='Longitude',y='Latitude')+
+plot_taxi=ggmap(map)+labs(x='Longitude',y='Latitude')+
 geom_jitter(aes(lon,lat,colour=factor(status)),data=loc[loc$status=='moving',],alpha=0.4)+
 geom_point(aes(lon,lat,colour=factor(status)),data=centers,size=10,alpha=0.6)+
 geom_jitter(aes(lon,lat,colour=factor(status)),data=loc[loc$status!='moving',],alpha=0.8)
-dev.off()
+
 
 
 ##Crime in San Fansisco
@@ -68,9 +66,10 @@ Top3=Crime[c(1,4,5),1]
 
 library(ggmap)
 map=get_map(location='San Fransico',maptype='roadmap',zoom=12)
-
-png('SanFransico_Crime.png',width=1200,height=800,units='px')
-ggmap(map)+geom_jitter(aes(X,Y,colour=Category),
+plot_crime=ggmap(map)+geom_jitter(aes(X,Y,colour=Category),
 	data=data_2014[data_2014$Category %in% Top3,],alpha=0.2)+geom_jitter(aes(X,Y,colour=Category),
-	data=data0[data0$Category %in% Top3,],alpha=1)
-dev.off()
+	data=data0[data0$Category %in% Top3,],alpha=1)+labs(x='Longitude',y='Latitude')
+
+setwd("~/Desktop/DataStory/spot-me-on-map")
+library(knitr)
+knit2html('README.Rmd')

@@ -43,6 +43,16 @@ multiplot(p1,p2,cols = 2)
 
 ![](2_Analysis_files/figure-markdown_github/distr%20bikes%20usage-1.png)
 
+Another reason to cause the binomial distribution usage is the geo-location. Shown in below chart, from bottom-left to top-right are : San Jose, Mountain View, Palo Alto and San Fransico.
+The bike in San Fransico are much highlier used than the rest area.
+
+``` r
+stn2stn_usage %>% ggplot(aes(Start_Terminal,End_Terminal))+geom_tile(aes(fill = bike_usage_trip))+
+  scale_fill_gradient(low = "lightblue",high = 'darkblue')
+```
+
+![](2_Analysis_files/figure-markdown_github/distr%20bikes%20usage%20by%20station-1.png)
+
 ### 3. bike usage distribution by time
 
 Let's assume we will run the bike recycle and check-up once a week. Therefore, we need find a good time to perform this activity. By examining the bike usage, we will find a timeslot that bike usage is low.

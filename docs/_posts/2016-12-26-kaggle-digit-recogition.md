@@ -4,10 +4,7 @@ title:  "Recognize the Digits"
 date:   2016-12-26 16:16:01 -0600
 categories: kaggle, SVM, PCA
 ---
-This time I am going to demostrate the kaggle 101 level competition - <a href="https://www.kaggle.com/c/digit-recognizer" target="_blank">digit recogniser</a>.
-
-<h2>Mission:</h2>
-We are asked to train a model to recogize the digit from the pixel data in this competition. <a href="https://www.kaggle.com/c/digit-recognizer/data" target="_blank">The data set</a> is available here.
+This time I am going to demostrate the kaggle 101 level competition - <a href="https://www.kaggle.com/c/digit-recognizer" target="_blank">digit recogniser</a>. We are asked to train a model to recogize the digit from the pixel data in this competition. <a href="https://www.kaggle.com/c/digit-recognizer/data" target="_blank">The data set</a> is available here.
 description of the data:
 1. label: the integers from 0 - 9;
 2. features: pixel001-pixel784, which are rolled out from 28x28 digit image;
@@ -16,9 +13,9 @@ description of the data:
 Let's randomly look at 100 digit examples:
 
 
-{% highlight r %}
+```r
 display(test[sample(28000,100),],28)
-{% endhighlight %}
+```
 
 <img class="wp-image-81 size-full" src="https://6chaoran.files.wordpress.com/2015/07/unnamed-chunk-1-1.png" alt="unnamed-chunk-1-1" width="504" height="504" /> 28x28 visualization[
 
@@ -27,7 +24,7 @@ display(test[sample(28000,100),],28)
 As we are having 784 features, which are prabably too many for training. We noticed the digits are well distinguishable, so that may be managable with lower resolution, say 28x28 to 14x14, which will significantly reduces the features from 784 to 196!
 The idea is to find the brightest pixel (max) within the adjance 2x2 grid.
 
-{% highlight r %}
+```r
   reduceDimfunction(data){
   posmatrix(1:784,28,28,byrow=T)
   offsetseq(1,28,2)
@@ -50,7 +47,7 @@ The idea is to find the brightest pixel (max) within the adjance 2x2 grid.
 train.reduced=reduceDim(train)
 test.reduced=reduceDim(test)
 
-{% endhighlight %}
+```
 
 
 Let's take a look at the digit images after dimension reduction.

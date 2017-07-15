@@ -52,9 +52,9 @@ test.reduced=reduceDim(test)
 
 Let's take a look at the digit images after dimension reduction.
 
-{% highlight r %}
+```r
 display(test.reduced[sample(28000,100),],14)
-{% endhighlight %}
+```
 
 <img class="wp-image-82 size-full" src="https://6chaoran.files.wordpress.com/2015/07/unnamed-chunk-3-1.png" alt="14x14 visualization" width="504" height="504" /> 
 14x14 visualization
@@ -64,12 +64,12 @@ The digit is still well recognizable!
 Besides the manual dimension reduction done earlier, we have a smarter alogrithm call 'Principle Component Analysis' (PCA).
 PCA is a method to compress the data and projected to n component axis. This comression and recovery process will incur some information loss, which is expressed the variance retained. In this case, we set the variance retrained to be 90%.
 
-{% highlight r %}
+```r
 library(caret)
 pcapreProcess(rbind(train.reduced,test.reduced),method='pca',thresh=0.9)
 train.pcapredict(pca,train.reduced)
 test.pcapredict(pca,test.reduced)
-{% endhighlight %}
+```
 
 <pre><code>## 
 ## Call:
@@ -84,14 +84,14 @@ With PCA implemented, we reduced the number of features to 47!
 <h2>Train with Linear SVM:</h2>
 For illustration purpose, we only trained 500 data points.
 
-{% highlight r %}
+```r
 ctrltrainControl(method='cv',number = 10)
 inTrain=sample(42000,500)
 run_timesystem.time(fittrain(factor(label[inTrain])~.,data=train.pca[inTrain,],
             trControl = ctrl,
             method='svmLinear'))
 print (fit)
-{% endhighlight %}
+```
 
 <pre><code>## Support Vector Machines with Linear Kernel 
 ## 

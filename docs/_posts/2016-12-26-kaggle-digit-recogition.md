@@ -26,7 +26,7 @@ Let's randomly look at 100 digit examples:
 As we are having 784 features, which are prabably too many for training. We noticed the digits are well distinguishable, so that may be managable with lower resolution, say 28x28 to 14x14, which will significantly reduces the features from 784 to 196!
 The idea is to find the brightest pixel (max) within the adjance 2x2 grid.
 
-{% higlight r %}
+{% highlight r %}
   reduceDimfunction(data){
   posmatrix(1:784,28,28,byrow=T)
   offsetseq(1,28,2)

@@ -4,10 +4,8 @@ title:  "Recognize the Digits"
 date:   2016-12-26 16:16:01 -0600
 categories: kaggle, SVM, PCA
 ---
-
-<h1>Recognize the Digits</h1>
-
 This time I am going to demostrate the kaggle 101 level competition - <a href="https://www.kaggle.com/c/digit-recognizer" target="_blank">digit recogniser</a>.
+
 <h2>Mission:</h2>
 We are asked to train a model to recogize the digit from the pixel data in this competition. <a href="https://www.kaggle.com/c/digit-recognizer/data" target="_blank">The data set</a> is available here.
 description of the data:
@@ -17,9 +15,12 @@ description of the data:
 <h2>Visualize the digit:</h2>
 Let's randomly look at 100 digit examples:
 
-[code lang="r"]display(test[sample(28000,100),],28)[/code]
 
-[caption id="attachment_81" align="alignnone" width="504"]<img class="wp-image-81 size-full" src="https://6chaoran.files.wordpress.com/2015/07/unnamed-chunk-1-1.png" alt="unnamed-chunk-1-1" width="504" height="504" /> 28x28 visualization[/caption]
+{% highlight r %}
+display(test[sample(28000,100),],28)
+{% endhighlight %}
+
+<img class="wp-image-81 size-full" src="https://6chaoran.files.wordpress.com/2015/07/unnamed-chunk-1-1.png" alt="unnamed-chunk-1-1" width="504" height="504" /> 28x28 visualization[
 
 <!--more-->
 <h2>Dimension Reduction 1:</h2>
@@ -58,7 +59,7 @@ Let's take a look at the digit images after dimension reduction.
 display(test.reduced[sample(28000,100),],14)
 {% endhighlight %}
 
-[caption id="attachment_82" align="alignnone" width="504"]<img class="wp-image-82 size-full" src="https://6chaoran.files.wordpress.com/2015/07/unnamed-chunk-3-1.png" alt="14x14 visualization" width="504" height="504" /> 
+<img class="wp-image-82 size-full" src="https://6chaoran.files.wordpress.com/2015/07/unnamed-chunk-3-1.png" alt="14x14 visualization" width="504" height="504" /> 
 14x14 visualization
 
 The digit is still well recognizable!

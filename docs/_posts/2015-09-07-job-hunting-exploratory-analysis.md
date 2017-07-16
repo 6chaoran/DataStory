@@ -1,7 +1,7 @@
 ---
 layout: post
 title:"[exploratory analysis]Job Hunting Like A Data Analyst (Part II)"
-date: 2015-09-07
+date: 2015-09-07 16:16:01 +0800
 ---
 
 Continued with [previous post](https://6chaoran.github.io/DataStory/job-hunting-web-scraping/), I’ve added some additional lines of codes to fetch the job description of each job post. This will take a bit longer time, which is about (1.5 hour) for me, because I set a delay of ~10 seconds between each request.   

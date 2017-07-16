@@ -1,9 +1,9 @@
 ---
 layout: post
-title:  "Tree based models on Kaggle Titanic Data"
-date:   2016-12-19 21:39:59 +0800
+title:  "[kaggle] Tree based models in R on Titanic Data"
+date:   2015-07-19 21:39:59 +0800
 categories: kaggle
-tags: kaggle, titanic, random forest
+tags: kaggle, titanic, random forest, decision tree
 ---
 This is the first time I blog my journey of learning data science, which starts from the first kaggle competition I attempted - the Titanic. In <a href="https://www.kaggle.com/c/titanic" target="_blank">this competition</a>, we are asked to predict the survival of passengers onboard, with some information given, such as age, gender, ticket fare...
 

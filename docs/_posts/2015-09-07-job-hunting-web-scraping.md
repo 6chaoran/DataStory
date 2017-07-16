@@ -4,6 +4,7 @@ title: "Job Hunting Like A Data Analyst"
 date: 2015-09-07 16:16:01 +0800
 categories: web-scraping
 ---
+
 ## Motivation:
 I'm currently suffering a tough time in looking for a data analyst job.  
 Instead of doing it in a traditional way, I am thinking why not do the job hunting just like a data analyst, by making use of the advantages of data science. 

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Getting Started With Tableau"
-date:   2016-12-26 16:16:01 -0600
+date:   2015-08-10 16:16:01 -0600
 categories: visualization
 ---
 ## Intro to Tableau

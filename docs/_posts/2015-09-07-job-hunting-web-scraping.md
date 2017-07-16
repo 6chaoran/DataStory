@@ -1,7 +1,8 @@
 ---
 layout: post
 title: Job Hunting Like A Data Analyst
-date: 2015-09-07
+date: 2015-09-07 16:16:01 +0800
+categories: web-scraping
 ---
 ## Motivation:
 I'm currently suffering a tough time in looking for a data analyst job.  
@@ -46,18 +47,18 @@ Instead of browsing every page to look for the ideal job post, I would like to u
 Using python urllib2 package, we can simply write a function to send HTTP request, download the page, read the content and parse the html to return the response.
 
 ```python
-	import urllib2
-	from bs4 import BeautifulSoup
-	def getResponse(url):
-		user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:39.0) Gecko/20100101 Firefox/39.0'
-		headers={'User-Agent':user_agent}
-		# define the request
-		request=urllib2.Request(url,headers=headers)
-		# request, download and read the content
-		response=urllib2.urlopen(request).read()
-		# parse the html using BeautifulSoup
-		response=BeautifulSoup(response)
-		return response
+import urllib2
+from bs4 import BeautifulSoup
+def getResponse(url):
+	user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:39.0) Gecko/20100101 Firefox/39.0'
+	headers={'User-Agent':user_agent}
+	# define the request
+	request=urllib2.Request(url,headers=headers)
+	# request, download and read the content
+	response=urllib2.urlopen(request).read()
+	# parse the html using BeautifulSoup
+	response=BeautifulSoup(response)
+	return response
 ```
 
 It is import to include a header of user-agent in the request, otherwise you will get an error saying request is denied. To find the header information, you can go to Firefox->Tools->Web Developer->Network and it is under the header tab.
@@ -73,34 +74,34 @@ We can just call findNext/findAll('h2').text to extract the text in h2 tag. Simi
 There are many possibilities of h2 tags other the job titles, so I would like to refine the selection to the job post main content by filtering ('ul',{'class':'jobs'}), which means ul tag with attribute 'class' and value 'jobs'.     
 Within the job post content, we do another selection by filtering ('ul',{'class':'jobs'}) and it will generate a list of html contains 25 elements. 
 
-``python
-	bassurl = 'https://sg.linkedin.com/job/data-analyst-jobs-singapore/'
-	## get the response html from the page
-	response=getResponse(baseurl)
-	## refine the selection of job posting
-	content=response.findAll('ul',{'class':'jobs'})[0]
-	## select job lists
-	jobs=content.findAll('li',{'class':'job'})
+```python
+bassurl = 'https://sg.linkedin.com/job/data-analyst-jobs-singapore/'
+## get the response html from the page
+response=getResponse(baseurl)
+## refine the selection of job posting
+content=response.findAll('ul',{'class':'jobs'})[0]
+## select job lists
+jobs=content.findAll('li',{'class':'job'})
 ```
 
 In order to get the basic information of job title, link, company name, post date and company location, I defined 4 functions to loop over the `jobs` list.    
 Using encode('utf-8') can prevent the encode error, when writing the data into csv file.
 
 ```python
-	def getTitle(x):
-		return x.findNext('h2').text.encode('utf-8')
+def getTitle(x):
+	return x.findNext('h2').text.encode('utf-8')
 
-	def getLink(x):
-		return x.findNext('h2').findNext('a')['href']
+def getLink(x):
+	return x.findNext('h2').findNext('a')['href']
 
-	def getCompany(x):
-		return x.findNext('a',{'class':'company'}).text.encode('utf-8')
+def getCompany(x):
+	return x.findNext('a',{'class':'company'}).text.encode('utf-8')
 
-	def getDate(x):
-		return x.findNext('span',{'itemprop':'datePosted'}).text.encode('utf-8')
+def getDate(x):
+	return x.findNext('span',{'itemprop':'datePosted'}).text.encode('utf-8')
 
-	def getLocation(x):
-		return x.findNext('span',{'itemprop':'addressLocality'}).text.encode('utf-8')
+def getLocation(x):
+	return x.findNext('span',{'itemprop':'addressLocality'}).text.encode('utf-8')
 ```
 
 The last and important information we need to get is the URL of next page, so that we can automatic the web scraping.
@@ -121,6 +122,38 @@ Then each dictionary will be appended as a list to form a collection.
 Here an additional valid function is introduced, because some information may be missing for certain record and it will return None if such case happens.
 
 ```python
+data=[]
+for i in jobs:
+	row={}
+	row['title']=valid(getTitle,i)
+	row['company']=valid(getCompany,i)
+	row['date']=valid(getDate,i)
+	row['location']=valid(getLocation,i)
+	row['link']=valid(getLink,i)
+	data.append(row)
+	
+def valid(fn,x):
+	try:
+		return fn(x)
+	except:
+		return None
+```
+
+#### Put them together
+We now have all the pieces ready and we can write a function called `fetchPage` to group them together.
+
+```python
+def fetchPage(baseurl):
+	response=getResponse(baseurl)
+	## page body of job posting
+	content=response.findAll('ul',{'class':'jobs'})[0]
+	## page navigation bar
+	page=response.findAll('div',{'class':'pagination'})[0].findAll('a',{'rel':'nofollow'})
+	## job lists
+	jobs=content.findAll('li',{'class':'job'})
+	## get url for next page
+	nextPageUrl=getNextPage(page)
+	## store information into list data
 	data=[]
 	for i in jobs:
 		row={}
@@ -130,40 +163,8 @@ Here an additional valid function is introduced, because some information may be
 		row['location']=valid(getLocation,i)
 		row['link']=valid(getLink,i)
 		data.append(row)
-		
-	def valid(fn,x):
-		try:
-			return fn(x)
-		except:
-			return None
-```
 
-#### Put them together
-We now have all the pieces ready and we can write a function called `fetchPage` to group them together.
-
-```python
-	def fetchPage(baseurl):
-		response=getResponse(baseurl)
-		## page body of job posting
-		content=response.findAll('ul',{'class':'jobs'})[0]
-		## page navigation bar
-		page=response.findAll('div',{'class':'pagination'})[0].findAll('a',{'rel':'nofollow'})
-		## job lists
-		jobs=content.findAll('li',{'class':'job'})
-		## get url for next page
-		nextPageUrl=getNextPage(page)
-		## store information into list data
-		data=[]
-		for i in jobs:
-			row={}
-			row['title']=valid(getTitle,i)
-			row['company']=valid(getCompany,i)
-			row['date']=valid(getDate,i)
-			row['location']=valid(getLocation,i)
-			row['link']=valid(getLink,i)
-			data.append(row)
-	
-		return data,nextPageUrl
+	return data,nextPageUrl
 ```
 
 #### Loop it over the pages

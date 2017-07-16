@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Job Hunting Like A Data Analyst
+title: "Job Hunting Like A Data Analyst"
 date: 2015-09-07 16:16:01 +0800
 categories: web-scraping
 ---
@@ -113,7 +113,7 @@ def getNextPage(page):
 		return [p['href'] for p in page if 'next' in p['href']][0]
 	except:
 		return None
-``	
+```	
 
 #### Store the data
 There are some types of collection in python, e.g. list, set, dictionary, tuple, among which we are going to use combination of list and dictionary to store the data. Because it is more convenient to write to csv file using DictWriter function or easier to convert to pandas DataFrame type.   

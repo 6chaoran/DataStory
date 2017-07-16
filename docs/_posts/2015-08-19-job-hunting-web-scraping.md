@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "Job Hunting Like A Data Analyst"
-date: 2015-09-07 16:16:01 +0800
+title: "[web-scraping]Job Hunting Like A Data Analyst"
+date: 2015-08-19 16:16:01 +0800
 categories: web-scraping
 ---
 

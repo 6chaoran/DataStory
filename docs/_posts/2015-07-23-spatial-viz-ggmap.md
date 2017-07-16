@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Spatial Visualization with ggmap R package"
+title:  "[vis]Spatial Visualization with ggmap R package"
 date:   2015-07-23 16:16:01 -0600
 categories: kaggle, visualization
 ---  

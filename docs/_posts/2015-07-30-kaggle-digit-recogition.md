@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Recognize the Digits"
+title:  "[kaggle]Recognize the Digits"
 date:   2015-07-30 16:16:01 -0600
 categories: kaggle, SVM, PCA
 ---

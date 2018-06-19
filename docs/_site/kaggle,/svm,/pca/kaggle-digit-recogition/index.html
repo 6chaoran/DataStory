@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>[kaggle] Recognize the Digits – Chaoran – data science self-learning repository.</title>
+
+        <meta charset="utf-8" />
+    <meta content='text/html; charset=utf-8' http-equiv='Content-Type'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0'>
+
+    
+    <meta name="description" content="This time I am going to demostrate the kaggle 101 level competition - digit recogniser. We are asked to train a model to recogize the digit from the pixel data in this competition. The data set is available here.
+description of the data:
+
+  label: the integers from 0 - 9;
+  features: pixel001-pixel784, which are rolled out from 28x28 digit image;
+  pixel data is ranged from 0 -255, which indicating the brightness of the pixel in grey scale;
+
+Visualize the digit:
+Let’s randomly look at 100 digit examples:
+
+" />
+    <meta property="og:description" content="This time I am going to demostrate the kaggle 101 level competition - digit recogniser. We are asked to train a model to recogize the digit from the pixel data in this competition. The data set is available here.
+description of the data:
+
+  label: the integers from 0 - 9;
+  features: pixel001-pixel784, which are rolled out from 28x28 digit image;
+  pixel data is ranged from 0 -255, which indicating the brightness of the pixel in grey scale;
+
+Visualize the digit:
+Let’s randomly look at 100 digit examples:
+
+" />
+    
+    <meta name="author" content="Chaoran" />
+
+    
+    <meta property="og:title" content="[kaggle] Recognize the Digits" />
+    <meta property="twitter:title" content="[kaggle] Recognize the Digits" />
+    
+
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <link rel="stylesheet" type="text/css" href="/DataStory/style.css" />
+    <link rel="alternate" type="application/rss+xml" title="Chaoran - data science self-learning repository." href="/DataStory/feed.xml" />
+
+    <!-- Created with Jekyll Now - http://github.com/barryclark/jekyll-now -->
+  </head>
+
+  <body>
+    <div class="wrapper-masthead">
+      <div class="container">
+        <header class="masthead clearfix">
+          <a href="/DataStory/" class="site-avatar"><img src="" /></a>
+
+          <div class="site-info">
+            <h1 class="site-name"><a href="/DataStory/">Chaoran</a></h1>
+            <p class="site-description">data science self-learning repository.</p>
+          </div>
+
+          <nav>
+            <a href="/DataStory/">Blog</a>
+            <a href="/DataStory/about">About</a>
+          </nav>
+        </header>
+      </div>
+    </div>
+
+    <div id="main" role="main" class="container">
+      <article class="post">
+  <h1>[kaggle] Recognize the Digits</h1>
+
+  <div class="entry">
+    <p>This time I am going to demostrate the kaggle 101 level competition - <a href="https://www.kaggle.com/c/digit-recognizer" target="_blank">digit recogniser</a>. We are asked to train a model to recogize the digit from the pixel data in this competition. <a href="https://www.kaggle.com/c/digit-recognizer/data" target="_blank">The data set</a> is available here.
+description of the data:</p>
+<ol>
+  <li>label: the integers from 0 - 9;</li>
+  <li>features: pixel001-pixel784, which are rolled out from 28x28 digit image;</li>
+  <li>pixel data is ranged from 0 -255, which indicating the brightness of the pixel in grey scale;</li>
+</ol>
+<h2>Visualize the digit:</h2>
+<p>Let’s randomly look at 100 digit examples:</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">display</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="n">sample</span><span class="p">(</span><span class="m">28000</span><span class="p">,</span><span class="m">100</span><span class="p">),],</span><span class="m">28</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img class="wp-image-81 size-full" src="https://6chaoran.files.wordpress.com/2015/07/unnamed-chunk-1-1.png" alt="unnamed-chunk-1-1" width="504" height="504" /> 28x28 visualization[</p>
+
+<!--more-->
+<h2>Dimension Reduction 1:</h2>
+<p>As we are having 784 features, which are prabably too many for training. We noticed the digits are well distinguishable, so that may be managable with lower resolution, say 28x28 to 14x14, which will significantly reduces the features from 784 to 196!
+The idea is to find the brightest pixel (max) within the adjance 2x2 grid.</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="w">  </span><span class="n">reduceDimfunction</span><span class="p">(</span><span class="n">data</span><span class="p">){</span><span class="w">
+  </span><span class="n">posmatrix</span><span class="p">(</span><span class="m">1</span><span class="o">:</span><span class="m">784</span><span class="p">,</span><span class="m">28</span><span class="p">,</span><span class="m">28</span><span class="p">,</span><span class="n">byrow</span><span class="o">=</span><span class="nb">T</span><span class="p">)</span><span class="w">
+  </span><span class="n">offsetseq</span><span class="p">(</span><span class="m">1</span><span class="p">,</span><span class="m">28</span><span class="p">,</span><span class="m">2</span><span class="p">)</span><span class="w">
+  </span><span class="n">n</span><span class="o">=</span><span class="m">0</span><span class="w">
+  </span><span class="n">train.reduceddata.frame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="m">1</span><span class="o">:</span><span class="n">nrow</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="w">
+  </span><span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nf">is.null</span><span class="p">(</span><span class="n">data</span><span class="o">$</span><span class="n">label</span><span class="p">))</span><span class="w"> </span><span class="n">train.reduced</span><span class="o">$</span><span class="n">labeldata</span><span class="o">$</span><span class="n">label</span><span class="w">
+  </span><span class="n">data</span><span class="o">$</span><span class="n">labelNULL</span><span class="w">
+  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">offset</span><span class="p">){</span><span class="w">
+    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">j</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">offset</span><span class="p">){</span><span class="w">
+      </span><span class="n">pxas.numeric</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="n">i</span><span class="o">:</span><span class="p">(</span><span class="n">i</span><span class="m">+1</span><span class="p">),</span><span class="n">j</span><span class="o">:</span><span class="p">(</span><span class="n">j</span><span class="m">+1</span><span class="p">)])</span><span class="w">
+      </span><span class="n">pxapply</span><span class="p">(</span><span class="n">data</span><span class="p">[,</span><span class="n">px</span><span class="p">],</span><span class="m">1</span><span class="p">,</span><span class="n">max</span><span class="p">)</span><span class="w">
+      </span><span class="n">indexpaste0</span><span class="p">(</span><span class="s1">'px'</span><span class="p">,</span><span class="n">n</span><span class="p">)</span><span class="w">
+      </span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="m">+1</span><span class="w">
+      </span><span class="n">train.reduced</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="n">px</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+  </span><span class="n">train.reduced</span><span class="o">$</span><span class="n">indexNULL</span><span class="w">
+  </span><span class="n">return</span><span class="w"> </span><span class="p">(</span><span class="n">train.reduced</span><span class="p">)</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="n">train.reduced</span><span class="o">=</span><span class="n">reduceDim</span><span class="p">(</span><span class="n">train</span><span class="p">)</span><span class="w">
+</span><span class="n">test.reduced</span><span class="o">=</span><span class="n">reduceDim</span><span class="p">(</span><span class="n">test</span><span class="p">)</span><span class="w">
+
+</span></code></pre></div></div>
+
+<p>Let’s take a look at the digit images after dimension reduction.</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">display</span><span class="p">(</span><span class="n">test.reduced</span><span class="p">[</span><span class="n">sample</span><span class="p">(</span><span class="m">28000</span><span class="p">,</span><span class="m">100</span><span class="p">),],</span><span class="m">14</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<p><img class="wp-image-82 size-full" src="https://6chaoran.files.wordpress.com/2015/07/unnamed-chunk-3-1.png" alt="14x14 visualization" width="504" height="504" /> 
+14x14 visualization</p>
+
+<p>The digit is still well recognizable!</p>
+<h2>Dimension Reduction 2:</h2>
+<p>Besides the manual dimension reduction done earlier, we have a smarter alogrithm call ‘Principle Component Analysis’ (PCA).
+PCA is a method to compress the data and projected to n component axis. This comression and recovery process will incur some information loss, which is expressed the variance retained. In this case, we set the variance retrained to be 90%.</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">library</span><span class="p">(</span><span class="n">caret</span><span class="p">)</span><span class="w">
+</span><span class="n">pcapreProcess</span><span class="p">(</span><span class="n">rbind</span><span class="p">(</span><span class="n">train.reduced</span><span class="p">,</span><span class="n">test.reduced</span><span class="p">),</span><span class="n">method</span><span class="o">=</span><span class="s1">'pca'</span><span class="p">,</span><span class="n">thresh</span><span class="o">=</span><span class="m">0.9</span><span class="p">)</span><span class="w">
+</span><span class="n">train.pcapredict</span><span class="p">(</span><span class="n">pca</span><span class="p">,</span><span class="n">train.reduced</span><span class="p">)</span><span class="w">
+</span><span class="n">test.pcapredict</span><span class="p">(</span><span class="n">pca</span><span class="p">,</span><span class="n">test.reduced</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<pre><code>## 
+## Call:
+## preProcess.default(x = rbind(train.reduced, test.reduced), method =
+##  "pca", thresh = 0.9)
+## 
+## Created from 70000 samples and 101 variables
+## Pre-processing: principal component signal extraction, scaled, centered 
+## 
+## PCA needed 47 components to capture 90 percent of the variance.</code></pre>
+<p>With PCA implemented, we reduced the number of features to 47!</p>
+<h2>Train with Linear SVM:</h2>
+<p>For illustration purpose, we only trained 500 data points.</p>
+
+<div class="language-r highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ctrltrainControl</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">'cv'</span><span class="p">,</span><span class="n">number</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10</span><span class="p">)</span><span class="w">
+</span><span class="n">inTrain</span><span class="o">=</span><span class="n">sample</span><span class="p">(</span><span class="m">42000</span><span class="p">,</span><span class="m">500</span><span class="p">)</span><span class="w">
+</span><span class="n">run_timesystem.time</span><span class="p">(</span><span class="n">fittrain</span><span class="p">(</span><span class="n">factor</span><span class="p">(</span><span class="n">label</span><span class="p">[</span><span class="n">inTrain</span><span class="p">])</span><span class="o">~</span><span class="n">.</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">train.pca</span><span class="p">[</span><span class="n">inTrain</span><span class="p">,],</span><span class="w">
+            </span><span class="n">trControl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctrl</span><span class="p">,</span><span class="w">
+            </span><span class="n">method</span><span class="o">=</span><span class="s1">'svmLinear'</span><span class="p">))</span><span class="w">
+</span><span class="n">print</span><span class="w"> </span><span class="p">(</span><span class="n">fit</span><span class="p">)</span><span class="w">
+</span></code></pre></div></div>
+
+<pre><code>## Support Vector Machines with Linear Kernel 
+## 
+## 500 samples
+##  46 predictor
+##  10 classes: '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold) 
+## 
+## Summary of sample sizes: 449, 452, 449, 449, 451, 450, ... 
+## 
+## Resampling results
+## 
+##   Accuracy   Kappa     Accuracy SD  Kappa SD  
+##   0.8219855  0.801539  0.03704343   0.04130649
+## 
+## Tuning parameter 'C' was held constant at a value of 1
+## 
+</code></pre>
+<h2>Summary:</h2>
+<p>Simple linear SVM is giving fairely good accuracy with only small part of the entire training data.
+Further Explore Area:</p>
+<ol>
+  <li>Increase PCA threshold</li>
+  <li>Using higher order SVM / Gaussian Kernel SVM or Neural Network/Random Forest</li>
+  <li>Train with more data</li>
+</ol>
+
+<p>The completed R code is available <a href="https://github.com/6chaoran/kaggle/blob/master/digit-recognizer/digit-recognize.R" target="_blank">here</a>.</p>
+
+  </div>
+
+  <div class="date">
+    Written on July 30, 2015
+  </div>
+
+  
+</article>
+
+    </div>
+
+    <div class="wrapper-footer">
+      <div class="container">
+        <footer class="footer">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+        </footer>
+      </div>
+    </div>
+
+    
+
+  </body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>[RecSys] Implementation of Model Based Recommendation System in R – Chaoran – data science self-learning repository.</title>
+
+        <meta charset="utf-8" />
+    <meta content='text/html; charset=utf-8' http-equiv='Content-Type'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0'>
+
+    
+    <meta name="description" content="The most straight forward recommendation system are either user based CF (collaborative filtering) or item based CF, which are categorized as memory based methods. User-Based CF is to recommend products based on behaviour of similar users, and the Item-Based CF is to recommend similar products from products that user purchased. No matter which method is used, the user-user or item-item similarity matrix, which could be sizable, is required to compute.
+
+" />
+    <meta property="og:description" content="The most straight forward recommendation system are either user based CF (collaborative filtering) or item based CF, which are categorized as memory based methods. User-Based CF is to recommend products based on behaviour of similar users, and the Item-Based CF is to recommend similar products from products that user purchased. No matter which method is used, the user-user or item-item similarity matrix, which could be sizable, is required to compute.
+
+" />
+    
+    <meta name="author" content="Chaoran" />
+
+    
+    <meta property="og:title" content="[RecSys] Implementation of Model Based Recommendation System in R" />
+    <meta property="twitter:title" content="[RecSys] Implementation of Model Based Recommendation System in R" />
+    
+
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <link rel="stylesheet" type="text/css" href="/DataStory/style.css" />
+    <link rel="alternate" type="application/rss+xml" title="Chaoran - data science self-learning repository." href="/DataStory/feed.xml" />
+
+    <!-- Created with Jekyll Now - http://github.com/barryclark/jekyll-now -->
+  </head>
+
+  <body>
+    <div class="wrapper-masthead">
+      <div class="container">
+        <header class="masthead clearfix">
+          <a href="/DataStory/" class="site-avatar"><img src="" /></a>
+
+          <div class="site-info">
+            <h1 class="site-name"><a href="/DataStory/">Chaoran</a></h1>
+            <p class="site-description">data science self-learning repository.</p>
+          </div>
+
+          <nav>
+            <a href="/DataStory/">Blog</a>
+            <a href="/DataStory/about">About</a>
+          </nav>
+        </header>
+      </div>
+    </div>
+
+    <div id="main" role="main" class="container">
+      <article class="post">
+  <h1>[RecSys] Implementation of Model Based Recommendation System in R</h1>
+
+  <div class="entry">
+    <p>The most straight forward recommendation system are either user based CF (collaborative filtering) or item based CF, which are categorized as memory based methods. User-Based CF is to recommend products based on behaviour of similar users, and the Item-Based CF is to recommend similar products from products that user purchased. No matter which method is used, the user-user or item-item similarity matrix, which could be sizable, is required to compute.</p>
+
+<p>While on the contrast, a model based approach could refer to converting recommendation problem to regression, classification, learning to rank problem. Matrix Factorization, which is also known as latent factor model,SVD, is one of the most commonly used model based methods. In this post, a variety methods of CF will be discussed, including:</p>
+
+<ul>
+  <li>Gradient Descent CF (GD)</li>
+  <li>Alternating Least Square (ALS)</li>
+</ul>
+
+<h3 id="1-dataset">1. dataset</h3>
+
+<p>This post is demonstrated on MovieLens dataset, which consists of 10M rows of user-movie rating records.</p>
+
+<h3 id="2-formula">2. formula</h3>
+
+<p>The matrix factorization representation: the rating matrix could be considered as the cross product of two matrix.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Y = U x M
+</code></pre></div></div>
+
+<p>where <code class="highlighter-rouge">Y</code> is the rating matrix with dimension (u,p),
+<code class="highlighter-rouge">U</code> is the decomposed user matrix,
+<code class="highlighter-rouge">M</code> is the decomposed movie matrix.</p>
+
+<p>loss function:</p>
+
+<p><img src="https://6chaoran.files.wordpress.com/2016/12/1.jpg" alt="image" /></p>
+
+<p>gradient function:</p>
+
+<p><img src="https://6chaoran.files.wordpress.com/2016/12/2.jpg" alt="image" /></p>
+
+<h3 id="3-model-optimizer">3. model optimizer</h3>
+
+<p>There are two methods that we are going to compare:</p>
+
+<ul>
+  <li>Gradient Descent CF: update the gradients of user and item matrix simultaneously</li>
+  <li>Alternating Least Square: update the gradients of user and item matrix alternatively</li>
+</ul>
+
+<p>Ideally, gradient descent should have better model performance; while alternating least square could have faster convergence. When the size of data grows large, the difference will be more severe.</p>
+
+<h3 id="4-result-comparison">4. result comparison</h3>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>method  iter    rmse.train  rmse.val    time
+GD      205     0.8047878   0.9328183   153.463
+ALS     280     0.8295948   0.9366344   153.357
+</code></pre></div></div>
+
+<p><img src="https://6chaoran.files.wordpress.com/2016/12/3.png?w=700" alt="image" /></p>
+
+<h3 id="r-code">R code</h3>
+<p><a href="https://github.com/6chaoran/DataStory/blob/master/RecommenderSystem/ml-latest-small/model_based_recsys.R">R code in github</a></p>
+
+  </div>
+
+  <div class="date">
+    Written on December 19, 2016
+  </div>
+
+  
+</article>
+
+    </div>
+
+    <div class="wrapper-footer">
+      <div class="container">
+        <footer class="footer">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+        </footer>
+      </div>
+    </div>
+
+    
+
+  </body>
+</html>

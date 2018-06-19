@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>[web-scraping] Job Hunting Like A Data Analyst (Part I) – Chaoran – data science self-learning repository.</title>
+
+        <meta charset="utf-8" />
+    <meta content='text/html; charset=utf-8' http-equiv='Content-Type'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0'>
+
+    
+    <meta name="description" content="Motivation:
+I’m currently suffering a tough time in looking for a data analyst job.
+Instead of doing it in a traditional way, I am thinking why not do the job hunting just like a data analyst, by making use of the advantages of data science.
+
+" />
+    <meta property="og:description" content="Motivation:
+I’m currently suffering a tough time in looking for a data analyst job.
+Instead of doing it in a traditional way, I am thinking why not do the job hunting just like a data analyst, by making use of the advantages of data science.
+
+" />
+    
+    <meta name="author" content="Chaoran" />
+
+    
+    <meta property="og:title" content="[web-scraping] Job Hunting Like A Data Analyst (Part I)" />
+    <meta property="twitter:title" content="[web-scraping] Job Hunting Like A Data Analyst (Part I)" />
+    
+
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <link rel="stylesheet" type="text/css" href="/DataStory/style.css" />
+    <link rel="alternate" type="application/rss+xml" title="Chaoran - data science self-learning repository." href="/DataStory/feed.xml" />
+
+    <!-- Created with Jekyll Now - http://github.com/barryclark/jekyll-now -->
+  </head>
+
+  <body>
+    <div class="wrapper-masthead">
+      <div class="container">
+        <header class="masthead clearfix">
+          <a href="/DataStory/" class="site-avatar"><img src="" /></a>
+
+          <div class="site-info">
+            <h1 class="site-name"><a href="/DataStory/">Chaoran</a></h1>
+            <p class="site-description">data science self-learning repository.</p>
+          </div>
+
+          <nav>
+            <a href="/DataStory/">Blog</a>
+            <a href="/DataStory/about">About</a>
+          </nav>
+        </header>
+      </div>
+    </div>
+
+    <div id="main" role="main" class="container">
+      <article class="post">
+  <h1>[web-scraping] Job Hunting Like A Data Analyst (Part I)</h1>
+
+  <div class="entry">
+    <h2 id="motivation">Motivation:</h2>
+<p>I’m currently suffering a tough time in looking for a data analyst job.<br />
+Instead of doing it in a traditional way, I am thinking why not do the job hunting just like a data analyst, by making use of the advantages of data science.</p>
+
+<p>Always, the first step to flight a battle is to know your enemy. As I’m looking for a job in Singapore/China, the first thing I would like to explore is the job market in these areas. <br />
+I’m interested to know about:</p>
+
+<ul>
+  <li>Who is hiring data analyst</li>
+  <li>Which cities need data analyst most</li>
+  <li>What skills are expected</li>
+  <li>How is a data analyst described</li>
+</ul>
+
+<p>What I will do is to start with LinkedIn Job Search to find the job posting about Data Analyst, using data science of course!</p>
+
+<h2 id="information-collection">Information Collection:</h2>
+<h3 id="what-you-need">What You Need:</h3>
+<ul>
+  <li>Python 2.x</li>
+  <li>Chrome/Firefox Browser</li>
+  <li>package urllib2</li>
+  <li>package bs4</li>
+</ul>
+
+<h3 id="essentials-of-a-simple-web-scraping">Essentials of a simple Web Scraping</h3>
+<h4 id="1-fetching-urls">1. Fetching URLs</h4>
+<p>The basic idea is to get URL for the first page and download the content of page. Then get the URL of next page and repeat.</p>
+<h4 id="2-mimic-to-browsers">2. Mimic to Browsers</h4>
+<p>Sometimes the web server won’t recognise the python browser and hence it is always a good practice to mimic as another popular web browser when doing the web scraping.  <code class="highlighter-rouge">urllib2</code> has a ‘headers’ parameter, which can be used to define the browser.</p>
+<h4 id="3-setting-a-delay">3. Setting a Delay</h4>
+<p>Most websites don’t like web spiders and will prevent too frequent request from the same IP address.  So it is better to set a time delay between each request.</p>
+<h4 id="4-parsing-html">4. Parsing HTML</h4>
+<p>After downloading the html of the page, we are not going to store it directly. Instead we will extract the useful information (e.g. text, links), store it and throw away the page html.</p>
+<h4 id="5-saving-into-data-file">5. Saving into Data File</h4>
+<p>After the information is extracted, we output the data into csv/txt file for easier future use.</p>
+
+<h3 id="scraping-linkedin-job-search">Scraping LinkedIn Job Search</h3>
+<p>To find the job post on LinkedIn is simply go to LinkedIn Job Search site and input keywords data analyst and Singapore, and then website will direct us to a new URL:
+“https://sg.linkedin.com/job/data-analyst-jobs-singapore/”, which is more or less like the screenshot below.
+<img src="https://6chaoran.files.wordpress.com/2015/08/linkedinjobsearch.jpg" alt="image" />
+Instead of browsing every page to look for the ideal job post, I would like to use python to browse the pages for us.</p>
+
+<h4 id="fetch-the-first-page">Fetch the first page</h4>
+<p>Using python urllib2 package, we can simply write a function to send HTTP request, download the page, read the content and parse the html to return the response.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">urllib2</span>
+<span class="kn">from</span> <span class="nn">bs4</span> <span class="kn">import</span> <span class="n">BeautifulSoup</span>
+<span class="k">def</span> <span class="nf">getResponse</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+	<span class="n">user_agent</span><span class="o">=</span><span class="s">'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:39.0) Gecko/20100101 Firefox/39.0'</span>
+	<span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s">'User-Agent'</span><span class="p">:</span><span class="n">user_agent</span><span class="p">}</span>
+	<span class="c"># define the request</span>
+	<span class="n">request</span><span class="o">=</span><span class="n">urllib2</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+	<span class="c"># request, download and read the content</span>
+	<span class="n">response</span><span class="o">=</span><span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">request</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+	<span class="c"># parse the html using BeautifulSoup</span>
+	<span class="n">response</span><span class="o">=</span><span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+	<span class="k">return</span> <span class="n">response</span>
+</code></pre></div></div>
+
+<p>It is import to include a header of user-agent in the request, otherwise you will get an error saying request is denied. To find the header information, you can go to Firefox-&gt;Tools-&gt;Web Developer-&gt;Network and it is under the header tab.
+<img src="https://6chaoran.files.wordpress.com/2015/08/browserheader.jpg" alt="image" /></p>
+
+<h4 id="extract-the-useful-information">Extract the useful information</h4>
+<p>Now we already have the html file ready and we can use BeautifulSoup findAll/findNext function to filter by the html tag. 
+For example, when we need to get the Job Title from the page, we can use Firefox inspector (Firefox-&gt;Tools-&gt;Web Developer-&gt;Inspector) to easily locate the element.
+<img src="https://6chaoran.files.wordpress.com/2015/08/htmlselector.jpg" alt="image" /></p>
+
+<p>By pointing to the job title, the h2 tag is highlighted.  <br />
+We can just call findNext/findAll(‘h2’).text to extract the text in h2 tag. Similarly we can call findNext/findAll(‘h2’)[‘href’] to extract the attribute, which is the link of the job post in this case.  <br />
+There are many possibilities of h2 tags other the job titles, so I would like to refine the selection to the job post main content by filtering (‘ul’,{‘class’:’jobs’}), which means ul tag with attribute ‘class’ and value ‘jobs’.   <br />
+Within the job post content, we do another selection by filtering (‘ul’,{‘class’:’jobs’}) and it will generate a list of html contains 25 elements.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">bassurl</span> <span class="o">=</span> <span class="s">'https://sg.linkedin.com/job/data-analyst-jobs-singapore/'</span>
+<span class="c">## get the response html from the page</span>
+<span class="n">response</span><span class="o">=</span><span class="n">getResponse</span><span class="p">(</span><span class="n">baseurl</span><span class="p">)</span>
+<span class="c">## refine the selection of job posting</span>
+<span class="n">content</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">findAll</span><span class="p">(</span><span class="s">'ul'</span><span class="p">,{</span><span class="s">'class'</span><span class="p">:</span><span class="s">'jobs'</span><span class="p">})[</span><span class="mi">0</span><span class="p">]</span>
+<span class="c">## select job lists</span>
+<span class="n">jobs</span><span class="o">=</span><span class="n">content</span><span class="o">.</span><span class="n">findAll</span><span class="p">(</span><span class="s">'li'</span><span class="p">,{</span><span class="s">'class'</span><span class="p">:</span><span class="s">'job'</span><span class="p">})</span>
+</code></pre></div></div>
+
+<p>In order to get the basic information of job title, link, company name, post date and company location, I defined 4 functions to loop over the <code class="highlighter-rouge">jobs</code> list.  <br />
+Using encode(‘utf-8’) can prevent the encode error, when writing the data into csv file.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">getTitle</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+	<span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">findNext</span><span class="p">(</span><span class="s">'h2'</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">'utf-8'</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">getLink</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+	<span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">findNext</span><span class="p">(</span><span class="s">'h2'</span><span class="p">)</span><span class="o">.</span><span class="n">findNext</span><span class="p">(</span><span class="s">'a'</span><span class="p">)[</span><span class="s">'href'</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">getCompany</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+	<span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">findNext</span><span class="p">(</span><span class="s">'a'</span><span class="p">,{</span><span class="s">'class'</span><span class="p">:</span><span class="s">'company'</span><span class="p">})</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">'utf-8'</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">getDate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+	<span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">findNext</span><span class="p">(</span><span class="s">'span'</span><span class="p">,{</span><span class="s">'itemprop'</span><span class="p">:</span><span class="s">'datePosted'</span><span class="p">})</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">'utf-8'</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">getLocation</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+	<span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">findNext</span><span class="p">(</span><span class="s">'span'</span><span class="p">,{</span><span class="s">'itemprop'</span><span class="p">:</span><span class="s">'addressLocality'</span><span class="p">})</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">'utf-8'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>The last and important information we need to get is the URL of next page, so that we can automatic the web scraping.
+try/except in python means to run the try clause  and run the except clause only if error occurs.  This is added in case the loop comes to the last page.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">getNextPage</span><span class="p">(</span><span class="n">page</span><span class="p">):</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="k">return</span> <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="s">'href'</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">page</span> <span class="k">if</span> <span class="s">'next'</span> <span class="ow">in</span> <span class="n">p</span><span class="p">[</span><span class="s">'href'</span><span class="p">]][</span><span class="mi">0</span><span class="p">]</span>
+	<span class="k">except</span><span class="p">:</span>
+		<span class="k">return</span> <span class="bp">None</span>
+</code></pre></div></div>
+
+<h4 id="store-the-data">Store the data</h4>
+<p>There are some types of collection in python, e.g. list, set, dictionary, tuple, among which we are going to use combination of list and dictionary to store the data. Because it is more convenient to write to csv file using DictWriter function or easier to convert to pandas DataFrame type. <br />
+The format of python dictionary is {key1:value1,key2:value2,…}. Each record of the data will be a dictionary with the column names as the key and information as the value. 
+Then each dictionary will be appended as a list to form a collection. <br />
+Here an additional valid function is introduced, because some information may be missing for certain record and it will return None if such case happens.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">data</span><span class="o">=</span><span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">:</span>
+	<span class="n">row</span><span class="o">=</span><span class="p">{}</span>
+	<span class="n">row</span><span class="p">[</span><span class="s">'title'</span><span class="p">]</span><span class="o">=</span><span class="n">valid</span><span class="p">(</span><span class="n">getTitle</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+	<span class="n">row</span><span class="p">[</span><span class="s">'company'</span><span class="p">]</span><span class="o">=</span><span class="n">valid</span><span class="p">(</span><span class="n">getCompany</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+	<span class="n">row</span><span class="p">[</span><span class="s">'date'</span><span class="p">]</span><span class="o">=</span><span class="n">valid</span><span class="p">(</span><span class="n">getDate</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+	<span class="n">row</span><span class="p">[</span><span class="s">'location'</span><span class="p">]</span><span class="o">=</span><span class="n">valid</span><span class="p">(</span><span class="n">getLocation</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+	<span class="n">row</span><span class="p">[</span><span class="s">'link'</span><span class="p">]</span><span class="o">=</span><span class="n">valid</span><span class="p">(</span><span class="n">getLink</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+	<span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+	
+<span class="k">def</span> <span class="nf">valid</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span><span class="n">x</span><span class="p">):</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+	<span class="k">except</span><span class="p">:</span>
+		<span class="k">return</span> <span class="bp">None</span>
+</code></pre></div></div>
+
+<h4 id="put-them-together">Put them together</h4>
+<p>We now have all the pieces ready and we can write a function called <code class="highlighter-rouge">fetchPage</code> to group them together.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">fetchPage</span><span class="p">(</span><span class="n">baseurl</span><span class="p">):</span>
+	<span class="n">response</span><span class="o">=</span><span class="n">getResponse</span><span class="p">(</span><span class="n">baseurl</span><span class="p">)</span>
+	<span class="c">## page body of job posting</span>
+	<span class="n">content</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">findAll</span><span class="p">(</span><span class="s">'ul'</span><span class="p">,{</span><span class="s">'class'</span><span class="p">:</span><span class="s">'jobs'</span><span class="p">})[</span><span class="mi">0</span><span class="p">]</span>
+	<span class="c">## page navigation bar</span>
+	<span class="n">page</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">findAll</span><span class="p">(</span><span class="s">'div'</span><span class="p">,{</span><span class="s">'class'</span><span class="p">:</span><span class="s">'pagination'</span><span class="p">})[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">findAll</span><span class="p">(</span><span class="s">'a'</span><span class="p">,{</span><span class="s">'rel'</span><span class="p">:</span><span class="s">'nofollow'</span><span class="p">})</span>
+	<span class="c">## job lists</span>
+	<span class="n">jobs</span><span class="o">=</span><span class="n">content</span><span class="o">.</span><span class="n">findAll</span><span class="p">(</span><span class="s">'li'</span><span class="p">,{</span><span class="s">'class'</span><span class="p">:</span><span class="s">'job'</span><span class="p">})</span>
+	<span class="c">## get url for next page</span>
+	<span class="n">nextPageUrl</span><span class="o">=</span><span class="n">getNextPage</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+	<span class="c">## store information into list data</span>
+	<span class="n">data</span><span class="o">=</span><span class="p">[]</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">:</span>
+		<span class="n">row</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">row</span><span class="p">[</span><span class="s">'title'</span><span class="p">]</span><span class="o">=</span><span class="n">valid</span><span class="p">(</span><span class="n">getTitle</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+		<span class="n">row</span><span class="p">[</span><span class="s">'company'</span><span class="p">]</span><span class="o">=</span><span class="n">valid</span><span class="p">(</span><span class="n">getCompany</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+		<span class="n">row</span><span class="p">[</span><span class="s">'date'</span><span class="p">]</span><span class="o">=</span><span class="n">valid</span><span class="p">(</span><span class="n">getDate</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+		<span class="n">row</span><span class="p">[</span><span class="s">'location'</span><span class="p">]</span><span class="o">=</span><span class="n">valid</span><span class="p">(</span><span class="n">getLocation</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+		<span class="n">row</span><span class="p">[</span><span class="s">'link'</span><span class="p">]</span><span class="o">=</span><span class="n">valid</span><span class="p">(</span><span class="n">getLink</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+		<span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+	<span class="k">return</span> <span class="n">data</span><span class="p">,</span><span class="n">nextPageUrl</span>
+</code></pre></div></div>
+
+<h4 id="loop-it-over-the-pages">Loop it over the pages</h4>
+<p>Since we already have the function to return the data and URL of nextPage, we can just write a <code class="highlighter-rouge">for</code> loop to get as many pages as we want.  <br />
+One thing to mention is that a time delay is recommended to set between the requests. In python, we can use <code class="highlighter-rouge">time.sleep(x)</code> function from time module, which means pause the program for x seconds. A constant time interval may look more like a robot, so I set the delay time to be a random variable. It can be accomplished by <code class="highlighter-rouge">random.random()</code> function, which generates a [0,1) float number.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	<span class="kn">import</span> <span class="nn">time</span>
+	<span class="kn">import</span> <span class="nn">random</span>
+	
+	<span class="k">def</span> <span class="nf">setDelay</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+		<span class="k">print</span> <span class="s">'wait ~'</span><span class="o">+</span><span class="n">n</span><span class="o">+</span><span class="s">' seconds ...'</span>
+		<span class="c">## I set +/- 20% range of randomness</span>
+		<span class="n">delay</span><span class="o">=</span><span class="p">(</span><span class="mf">0.8</span><span class="o">+</span><span class="mf">0.4</span><span class="o">*</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">())</span><span class="o">*</span><span class="n">n</span>
+		<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Loop the `fetchPage’ function, we will have the code like:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	<span class="k">def</span> <span class="nf">fetchPages</span><span class="p">(</span><span class="n">baseurl</span><span class="p">,</span><span class="n">path</span><span class="p">,</span><span class="n">nPages</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+		<span class="k">print</span> <span class="s">'Start:'</span>
+		<span class="n">data0</span><span class="p">,</span><span class="n">nextPageUrl</span><span class="o">=</span><span class="n">fetchPage</span><span class="p">(</span><span class="n">baseurl</span><span class="p">)</span>
+		<span class="k">print</span> <span class="s">'Page 1 completed'</span>
+		<span class="k">if</span> <span class="n">nextPageUrl</span><span class="p">:</span>
+			<span class="k">pass</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">return</span> <span class="s">'nextUrl is missing in first page!'</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">nPages</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+			<span class="k">if</span> <span class="n">nextPageUrl</span><span class="p">:</span>
+				<span class="n">setDelay</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+				<span class="n">data</span><span class="p">,</span><span class="n">nextPageUrl</span><span class="o">=</span><span class="n">fetchPage</span><span class="p">(</span><span class="n">nextPageUrl</span><span class="p">)</span>
+				<span class="k">print</span> <span class="s">'Page '</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s">' completed'</span>
+				<span class="n">data0</span><span class="o">+=</span><span class="n">data</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="k">print</span> <span class="s">'nextUrl is missing in page '</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s">'!'</span>
+				<span class="k">break</span>
+		<span class="n">write_csv</span><span class="p">(</span><span class="n">data0</span><span class="p">,</span><span class="n">path</span><span class="p">)</span>
+		<span class="k">print</span> <span class="s">'Writing data to '</span><span class="o">+</span><span class="n">path</span><span class="o">+</span><span class="s">' is done!'</span>
+		<span class="k">return</span> <span class="n">data0</span>
+</code></pre></div></div>
+
+<h4 id="write-to-csv">Write to csv</h4>
+<p>If you carefully exam the code in previous section, you will noticed the <code class="highlighter-rouge">write_csv</code> function is actually not yet defined.
+Here is the code, which uses <code class="highlighter-rouge">csv.DictWriter</code> to write into csv file row by row.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	<span class="k">def</span> <span class="nf">write_csv</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">path</span><span class="p">):</span>
+		<span class="n">fieldnames</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="s">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvfile</span><span class="p">:</span>
+			<span class="n">writer</span><span class="o">=</span><span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">csvfile</span><span class="p">,</span><span class="n">fieldnames</span><span class="o">=</span><span class="n">fieldnames</span><span class="p">)</span>
+			<span class="n">writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
+			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+				<span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Browsing hundreds of job post is just as simple as one sentence:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	<span class="n">data</span><span class="o">=</span><span class="n">fetchPages</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="s">'.../data.csv'</span><span class="p">,</span><span class="n">nPages</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Now you already got the 500 job posts in 2 mins!</p>
+
+  </div>
+
+  <div class="date">
+    Written on August 19, 2015
+  </div>
+
+  
+</article>
+
+    </div>
+
+    <div class="wrapper-footer">
+      <div class="container">
+        <footer class="footer">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+        </footer>
+      </div>
+    </div>
+
+    
+
+  </body>
+</html>

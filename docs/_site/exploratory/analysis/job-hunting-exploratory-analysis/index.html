@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>[exploratory analysis] Job Hunting Like A Data Analyst (Part II) – Chaoran – data science self-learning repository.</title>
+
+        <meta charset="utf-8" />
+    <meta content='text/html; charset=utf-8' http-equiv='Content-Type'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0'>
+
+    
+    <meta name="description" content="Continued with previous post, I’ve added some additional lines of codes to fetch the job description of each job post. This will take a bit longer time, which is about (1.5 hour) for me, because I set a delay of ~10 seconds between each request. 
+This week I will continue with overview picture of the job market of Data Analyst and develop a simple recommender based on skill and experience requirement.
+
+" />
+    <meta property="og:description" content="Continued with previous post, I’ve added some additional lines of codes to fetch the job description of each job post. This will take a bit longer time, which is about (1.5 hour) for me, because I set a delay of ~10 seconds between each request. 
+This week I will continue with overview picture of the job market of Data Analyst and develop a simple recommender based on skill and experience requirement.
+
+" />
+    
+    <meta name="author" content="Chaoran" />
+
+    
+    <meta property="og:title" content="[exploratory analysis] Job Hunting Like A Data Analyst (Part II)" />
+    <meta property="twitter:title" content="[exploratory analysis] Job Hunting Like A Data Analyst (Part II)" />
+    
+
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <link rel="stylesheet" type="text/css" href="/DataStory/style.css" />
+    <link rel="alternate" type="application/rss+xml" title="Chaoran - data science self-learning repository." href="/DataStory/feed.xml" />
+
+    <!-- Created with Jekyll Now - http://github.com/barryclark/jekyll-now -->
+  </head>
+
+  <body>
+    <div class="wrapper-masthead">
+      <div class="container">
+        <header class="masthead clearfix">
+          <a href="/DataStory/" class="site-avatar"><img src="" /></a>
+
+          <div class="site-info">
+            <h1 class="site-name"><a href="/DataStory/">Chaoran</a></h1>
+            <p class="site-description">data science self-learning repository.</p>
+          </div>
+
+          <nav>
+            <a href="/DataStory/">Blog</a>
+            <a href="/DataStory/about">About</a>
+          </nav>
+        </header>
+      </div>
+    </div>
+
+    <div id="main" role="main" class="container">
+      <article class="post">
+  <h1>[exploratory analysis] Job Hunting Like A Data Analyst (Part II)</h1>
+
+  <div class="entry">
+    <p>Continued with <a href="https://6chaoran.github.io/DataStory/job-hunting-web-scraping/">previous post</a>, I’ve added some additional lines of codes to fetch the job description of each job post. This will take a bit longer time, which is about (1.5 hour) for me, because I set a delay of ~10 seconds between each request. <br />
+This week I will continue with overview picture of the job market of Data Analyst and develop a simple recommender based on skill and experience requirement.</p>
+
+<h2 id="0-tools">0. Tools</h2>
+
+<ol>
+  <li>python 2.7</li>
+  <li>python package: pandas</li>
+  <li>python package: re</li>
+</ol>
+
+<h2 id="1-job-market-overview">1. Job Market Overview</h2>
+
+<h3 id="data-preparation">data preparation:</h3>
+
+<p>After some time of web scraping, we will have a quite clean dataset, which consists of a big chunk of text job description. What I got is something like below:</p>
+
+<p><img src="https://6chaoran.files.wordpress.com/2015/09/job-description1.jpg?w=700" alt="image" /></p>
+
+<p>Loading data is very simple in pandas compared with package csv.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="n">csv_file</span><span class="o">=</span><span class="s">'/Users/6chaoran/Desktop/sgJobs.csv'</span>
+ 
+<span class="c"># pandas csv loading</span>
+<span class="c"># similar with read_csv in R readr package</span>
+<span class="n">data</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv_file</span><span class="p">)</span>
+</code></pre></div></div>
+<h3 id="company-overview">company overview</h3>
+
+<p>Let’s create a quick function to plot a bar chart showing the frequency of the companies that are hiring Data Analyst.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">freqPlot</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">col</span><span class="p">,</span><span class="n">title</span><span class="p">,</span><span class="n">n</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+    <span class="c"># value_counts in pandas is simlar with table() in R</span>
+    <span class="c"># count each element in the Series</span>
+    <span class="n">freqList</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+ 
+    <span class="c"># I want to see the top 20 or less category</span>
+    <span class="n">n</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">freqList</span><span class="p">),</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">freqList</span><span class="o">=</span><span class="n">freqList</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
+    <span class="n">freqList</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+ 
+    <span class="c"># plot the horizontal barplot directly from the pandas DataFrame/Series</span>
+    <span class="k">return</span> <span class="n">freqList</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s">'barh'</span><span class="p">,</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Now we can just type</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">freqPlot</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="s">'company'</span><span class="p">,</span><span class="s">'company overview for Data Analyst job market'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>to plot the chart like this:</p>
+
+<p><img src="https://6chaoran.files.wordpress.com/2015/09/company_barplot.png?w=700" alt="image" /></p>
+
+<p>Not surprisingly, mostly big IT companies and banks are hiring Data Analysts.</p>
+
+<h3 id="job-title-overview">job title overview</h3>
+
+<p>Since we have already created the barplot function, we can make use of it to explore the other columns in the data frame.</p>
+
+<p><img src="https://6chaoran.files.wordpress.com/2015/09/job_title.png?w=700" alt="image" /></p>
+
+<p>The most common terms referred to a Data Analyst could be Business Analyst or Data Analyst, which are similar but actually difference in terms of job scope. <br />
+The Job title is very industry specialized. The categories could be further cleaned, but it requires some text processing tools and I don’t see much value from doing that.</p>
+
+<h3 id="experience-requirement-overview">experience requirement overview</h3>
+
+<p>There is a big chunk of text (Job Description) that we haven’t touched. So let’s get some useful information from that. <br />
+The experience requirement is usually statement in a sentence like “requires at least xx years of experience in xxx industry”. So my idea is catch the patter ‘xx years’ using regular expression, which can be used with re package in python. <br />
+some side notes of regular expression: <br />
+In regular expression,</p>
+
+<ul>
+  <li><code class="highlighter-rouge">.</code> means any single character, so I will use ‘….years’ pattern to catch either 1-9 years or 10+ years.</li>
+  <li><code class="highlighter-rouge">[0-9]</code> means any number (from 0-9)</li>
+  <li><code class="highlighter-rouge">^</code> inside <code class="highlighter-rouge">[]</code> means negation</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># load the regular expression package</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="k">def</span> <span class="nf">getExperience</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="c"># find all the '...years' patterns in the job description</span>
+    <span class="n">years</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">'....years'</span><span class="p">,</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">yearToNumber</span><span class="p">(</span><span class="n">years</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c">#remove non-numeric character and then convert to integer </span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">'[^0-9]'</span><span class="p">,</span><span class="s">''</span><span class="p">,</span><span class="n">years</span><span class="p">))</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+    <span class="n">years</span><span class="o">=</span><span class="nb">map</span><span class="p">(</span><span class="n">yearToNumber</span><span class="p">,</span><span class="n">years</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">years</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">years</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+ 
+<span class="c"># more than 20 years experience as the requirement looks unrealistic    </span>
+<span class="c"># set to NA for the cases</span>
+<span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">experience</span><span class="o">&gt;</span><span class="mi">20</span><span class="p">,</span><span class="s">'experience'</span><span class="p">]</span><span class="o">=</span><span class="bp">None</span>
+ 
+<span class="c"># plot the bar chart</span>
+<span class="n">freqPlot</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="s">'experience'</span><span class="p">,</span><span class="s">'experience requirement for Data Analyst'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p><img src="https://6chaoran.files.wordpress.com/2015/09/experience.png?w=700" alt="image" /></p>
+
+<h3 id="skill-requirement-overview">skill requirement overview</h3>
+
+<p>To get the skills from the job description, we are going to something a bit more complicated.</p>
+
+<h4 id="1-tokenize-the-text">1. tokenize the text</h4>
+
+<p>The principal idea to split the sentence by space, punctuation or other special character to get a bag of words, from which we can count the frequency, analyse the sentiment and some more.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">re</span>
+<span class="k">def</span> <span class="nf">cleanText</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="c"># convert all characters to lowercase</span>
+    <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+ 
+    <span class="c"># keep only numbers and alphabets, </span>
+    <span class="c"># replace the others with space</span>
+    <span class="n">text</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">'</span><span class="err">\</span><span class="s">W'</span><span class="p">,</span><span class="s">' '</span><span class="p">,</span><span class="n">text</span><span class="p">)</span>
+ 
+    <span class="c"># split the text with space</span>
+    <span class="n">words</span><span class="o">=</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">' '</span><span class="p">)</span>
+ 
+    <span class="c"># return a list of the unique words</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">words</span><span class="p">))</span>
+</code></pre></div></div>
+
+<h4 id="2-vectorize-the-feature">2. vectorize the feature</h4>
+
+<p>As I’ve been researching on data science for quite a while, I already have a list of skills that is frequently possessed by Data Analysts. Vectorization means to convert the skills requirement in each data record into the binary vector of the pre-defined skills. Let’s say the skills are defined as [‘excel’,’r’,’sql’,’python’]. If the job post only requires excel and sql, then it will be converted into vector[1,0,1,0].  <br />
+Let’s put it into code:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">convertTextFeature</span><span class="p">(</span><span class="n">text</span><span class="p">,</span><span class="n">feature</span><span class="p">):</span>
+    <span class="n">featureVector</span><span class="o">=</span><span class="p">{}</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">feature</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+            <span class="n">featureVector</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">=</span><span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">featureVector</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">=</span><span class="mi">0</span>
+    <span class="k">return</span> <span class="n">featureVector</span>
+</code></pre></div></div>
+
+<h4 id="3-aggregation">3. aggregation</h4>
+
+<p>In order to find the popularity of the skills that are needed. We can simply find the summation of each skill.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># pre-defined skills </span>
+<span class="n">skills</span><span class="o">=</span><span class="p">[</span><span class="s">'excel'</span><span class="p">,</span><span class="s">'r'</span><span class="p">,</span><span class="s">'sql'</span><span class="p">,</span><span class="s">'python'</span><span class="p">,</span><span class="s">'tableau'</span><span class="p">,</span><span class="s">'d3'</span><span class="p">,</span><span class="s">'qlikview'</span><span class="p">,</span><span class="s">'hadoop'</span><span class="p">,</span><span class="s">'matlab'</span><span class="p">,</span><span class="s">'scala'</span><span class="p">,</span><span class="s">'sas'</span><span class="p">,</span><span class="s">'spss'</span><span class="p">]</span>
+ 
+<span class="c"># convert JD to a bag of words</span>
+<span class="n">words</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s">'JD'</span><span class="p">]</span><span class="o">.</span><span class="nb">map</span><span class="p">(</span><span class="n">cleanText</span><span class="p">)</span>
+ 
+<span class="c"># vectorize the skills in data record</span>
+<span class="n">featureSkill</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">convertTextFeature</span><span class="p">(</span><span class="n">text</span><span class="p">,</span><span class="n">skills</span><span class="p">)</span> <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">words</span><span class="p">])</span>
+ 
+<span class="c"># sum the skill across the row</span>
+<span class="n">skillList</span><span class="o">=</span><span class="n">featureSkill</span><span class="o">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">skillList</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+<span class="n">skillList</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s">'barh'</span><span class="p">,</span><span class="n">title</span><span class="o">=</span><span class="s">'the skill requirement for a data analyst'</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>The skills popularity is shown below:</p>
+
+<p><img src="https://6chaoran.files.wordpress.com/2015/09/skills.png?w=700" alt="image" /></p>
+
+<p>Though there are a lot of advanced analytical software available in the market, Excel is still the most widely used tool. And after seeing this, I decide to pick up the SQL skills.</p>
+
+<p>The data set can be found <a href="https://raw.githubusercontent.com/6chaoran/DataStory/master/JobHuntingLikeADataAnalyst/sgJobs.csv">here</a>. <br />
+The python code can be found <a href="https://github.com/6chaoran/DataStory/blob/master/JobHuntingLikeADataAnalyst/JobMarket.py">here</a>.</p>
+
+
+  </div>
+
+  <div class="date">
+    Written on September  7, 2015
+  </div>
+
+  
+</article>
+
+    </div>
+
+    <div class="wrapper-footer">
+      <div class="container">
+        <footer class="footer">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+        </footer>
+      </div>
+    </div>
+
+    
+
+  </body>
+</html>

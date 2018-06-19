@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>[DL] Digit Recognition with Tensor Flow – Chaoran – data science self-learning repository.</title>
+
+        <meta charset="utf-8" />
+    <meta content='text/html; charset=utf-8' http-equiv='Content-Type'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0'>
+
+    
+    <meta name="description" content="This time I am going to continue with the kaggle 101 level competition – digit recogniser with deep learning tool Tensor Flow. 
+In the previous post, I used PCA and Pooling methods to reduce the dimensions of the dataset, and train with the linear SVM. Due to the limited efficiency of the R SVM package. I only sampled 500 records and performed a 10-fold cross validation. The resulting accuracy is about 82.7%
+
+" />
+    <meta property="og:description" content="This time I am going to continue with the kaggle 101 level competition – digit recogniser with deep learning tool Tensor Flow. 
+In the previous post, I used PCA and Pooling methods to reduce the dimensions of the dataset, and train with the linear SVM. Due to the limited efficiency of the R SVM package. I only sampled 500 records and performed a 10-fold cross validation. The resulting accuracy is about 82.7%
+
+" />
+    
+    <meta name="author" content="Chaoran" />
+
+    
+    <meta property="og:title" content="[DL] Digit Recognition with Tensor Flow" />
+    <meta property="twitter:title" content="[DL] Digit Recognition with Tensor Flow" />
+    
+
+    <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <link rel="stylesheet" type="text/css" href="/DataStory/style.css" />
+    <link rel="alternate" type="application/rss+xml" title="Chaoran - data science self-learning repository." href="/DataStory/feed.xml" />
+
+    <!-- Created with Jekyll Now - http://github.com/barryclark/jekyll-now -->
+  </head>
+
+  <body>
+    <div class="wrapper-masthead">
+      <div class="container">
+        <header class="masthead clearfix">
+          <a href="/DataStory/" class="site-avatar"><img src="" /></a>
+
+          <div class="site-info">
+            <h1 class="site-name"><a href="/DataStory/">Chaoran</a></h1>
+            <p class="site-description">data science self-learning repository.</p>
+          </div>
+
+          <nav>
+            <a href="/DataStory/">Blog</a>
+            <a href="/DataStory/about">About</a>
+          </nav>
+        </header>
+      </div>
+    </div>
+
+    <div id="main" role="main" class="container">
+      <article class="post">
+  <h1>[DL] Digit Recognition with Tensor Flow</h1>
+
+  <div class="entry">
+    <p>This time I am going to continue with the kaggle 101 level competition – <a href="https://www.kaggle.com/c/digit-recognizer">digit recogniser</a> with deep learning tool Tensor Flow. <br />
+In the <a href="https://6chaoran.github.io/DataStory/kaggle-digit-recogition/">previous post</a>, I used PCA and Pooling methods to reduce the dimensions of the dataset, and train with the linear SVM. Due to the limited efficiency of the R SVM package. I only sampled 500 records and performed a 10-fold cross validation. The resulting accuracy is about 82.7%</p>
+
+<p><img src="https://6chaoran.files.wordpress.com/2017/06/unnamed.jpg" alt="image" /></p>
+
+<h3 id="1-this-time-with-tensorflow">1. this time with tensorflow</h3>
+
+<p>we can address the problem differently:</p>
+
+<ul>
+  <li><strong>Deep Learning</strong>, especially Convolutional Neural Network is well suitable for image recognition problem.</li>
+  <li><strong>TensorFlow</strong> is a good tool to equickly build the neural network architecture and also empowers the capability of GPUs.</li>
+  <li><strong>Convolution Layers</strong> artificially create additional features, scanning the boxes of pixel on the image.</li>
+  <li><strong>Stochastic Gradient Descent</strong> replaces Gradient Descent. SGD takes sample of data to update the gradients, making training fast and less RAM consumption.</li>
+</ul>
+
+<p>Fully utilized the entire dataset (42k records) with deep learning models, the accuracy easily go up above 95%.</p>
+
+<h3 id="2-load-data">2. load data</h3>
+
+<p>data was prepared using pandas, and saved as numpy array</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">## load releveant packages</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="n">tf</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+ 
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s">'train_data.npy'</span><span class="p">)</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h3 id="3-visualize-image">3. visualize image</h3>
+
+<p>revert pixels back into image using <code class="highlighter-rouge">imshow</code> in <code class="highlighter-rouge">matplotlib.pyplot</code></p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">n</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">subs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+<span class="n">k</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">subs</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">28</span><span class="p">,</span><span class="mi">28</span><span class="p">),</span> <span class="n">cmap</span> <span class="o">=</span> <span class="s">'gray'</span><span class="p">)</span>
+        <span class="n">k</span><span class="o">+=</span><span class="mi">1</span>
+</code></pre></div></div>
+
+<p><img src="https://6chaoran.files.wordpress.com/2017/06/digit_tf_01.png" alt="image" /></p>
+
+<h4 id="split-data-into-trainvalidation">split data into train/validation</h4>
+
+<p>split 70% train set and 30% validation set</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">n</span><span class="p">,</span><span class="n">dim</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+<span class="n">cut</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.7</span><span class="o">*</span><span class="n">n</span><span class="p">)</span>
+<span class="n">inTrain</span> <span class="o">=</span> <span class="n">index</span><span class="p">[:</span><span class="n">cut</span><span class="p">]</span>
+<span class="n">inVal</span> <span class="o">=</span> <span class="n">index</span><span class="p">[</span><span class="n">cut</span><span class="p">:]</span>
+ 
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">inTrain</span><span class="p">,:]</span>
+<span class="n">Y_train</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[</span><span class="n">inTrain</span><span class="p">]</span>
+<span class="n">X_val</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">inVal</span><span class="p">,:]</span>
+<span class="n">Y_val</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[</span><span class="n">inVal</span><span class="p">]</span>
+</code></pre></div></div>
+
+<h3 id="4-deep-neural-network---dnn">4. deep neural network - DNN</h3>
+
+<p>Deep Neural Network consists of input layer, mulitple hidden layers and output layer.</p>
+
+<ul>
+  <li><strong>Input Layer</strong>, denoted as X, is the data with full dimension</li>
+  <li><strong>Hidden Layer</strong>, is the layer affined from input layer (in multiple times) by the weight w and bias b. The affined score is then denoted as wX+b. The scored need to be activated through a activation function. ReLU (rectified linear unit) is used in here.</li>
+  <li><strong>Output Layer</strong>, is affined score from the last hidden layer, and the score will finally map to prediction output.</li>
+</ul>
+
+<p>In this exmpale, I’m going to build a two layer DNN:</p>
+
+<ul>
+  <li>input layer: take full dimension of 784 (28*28)</li>
+  <li>hidden layer: affine dimension 784 to 256</li>
+  <li>output layer: affine dimension 256 to 10</li>
+</ul>
+
+<p>To make newwork configuration into tensorflow, we need to:</p>
+<ol>
+  <li>define the weight and bias in two layers as <code class="highlighter-rouge">W1</code>,<code class="highlighter-rouge">b1</code>,<code class="highlighter-rouge">W2</code>,<code class="highlighter-rouge">b2</code>. Weights are usually initialized to normal varialbe and slightly positive numbers to avoid dead activation. Bias can be initialized to be zeros.</li>
+  <li>construct the computation graph to calculate the cross-entropy loss (softmax) for multi-classification neural network in the forward propogation. Tensorflow will automatically calculate the gradients in backward propogation steps.</li>
+  <li>define the metrics accuarcy to evaluate the model effectiveness.</li>
+</ol>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">init_weight</span><span class="p">(</span><span class="n">shape</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span><span class="p">,</span> <span class="n">stddev</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">),</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+ 
+<span class="k">def</span> <span class="nf">init_bias</span><span class="p">(</span><span class="n">shape</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span>
+ 
+<span class="k">def</span> <span class="nf">DNN</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">reg</span><span class="p">,</span><span class="n">keep_prob</span><span class="p">,</span><span class="n">Dropout</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+ 
+    <span class="c">## define weight and bias</span>
+    <span class="n">Wfc1</span> <span class="o">=</span> <span class="n">init_weight</span><span class="p">([</span><span class="mi">784</span><span class="p">,</span><span class="mi">256</span><span class="p">])</span>
+    <span class="n">Bfc1</span> <span class="o">=</span> <span class="n">init_bias</span><span class="p">([</span><span class="mi">256</span><span class="p">])</span>
+    <span class="n">Wfc2</span> <span class="o">=</span> <span class="n">init_weight</span><span class="p">([</span><span class="mi">256</span><span class="p">,</span><span class="mi">10</span><span class="p">])</span>
+    <span class="n">Bfc2</span> <span class="o">=</span> <span class="n">init_bias</span><span class="p">([</span><span class="mi">10</span><span class="p">])</span>
+ 
+    <span class="c">## define two layer nn:</span>
+    <span class="n">a1</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">Wfc1</span><span class="p">)</span><span class="o">+</span><span class="n">Bfc1</span>  <span class="c"># fully-connected layer1</span>
+    <span class="n">a2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">a1</span><span class="p">)</span>  <span class="c"># ReLU activation layer</span>
+    <span class="n">logits</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">a2</span><span class="p">,</span><span class="n">Wfc2</span><span class="p">)</span><span class="o">+</span><span class="n">Bfc2</span>  <span class="c"># fully-connnected layer2</span>
+ 
+    <span class="c">## forward step: get softmax loss and L2 regularized loss</span>
+    <span class="n">total_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">sparse_softmax_cross_entropy</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">y</span><span class="p">,</span><span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">)</span>
+    <span class="n">mean_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">total_loss</span><span class="p">)</span>
+    <span class="n">reg_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">Wfc1</span><span class="p">))</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">Wfc2</span><span class="p">))</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">mean_loss</span> <span class="o">+</span> <span class="n">reg</span> <span class="o">*</span> <span class="n">reg_loss</span>
+ 
+    <span class="c">## get accuracy</span>
+    <span class="n">y_</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">acc</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">),</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">acc</span>
+</code></pre></div></div>
+
+<h3 id="5-convoluational-neural-network---cnn">5. convoluational neural network - CNN</h3>
+<p>CNN is dominately effective in computer vision problem. Convoluaitonary Layers and Pooling Layers are introduced additionally to tackle the problems. <br />
+In this simple CNN:</p>
+
+<ul>
+  <li>conv layer: 32 5x5x1 filters</li>
+  <li>pool layer: 2×2 max pool</li>
+  <li>relu layer (activation layer: <code class="highlighter-rouge">f(x) = max(x,0)</code>)</li>
+  <li>densely connectd layer: affined to 1024 dimension</li>
+  <li>relu layer</li>
+  <li>readout layer: affined to 10 classes</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">def</span> <span class="nf">conv2d</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="n">W</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="n">W</span><span class="p">,</span><span class="n">strides</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">padding</span><span class="o">=</span><span class="s">'SAME'</span><span class="p">)</span>
+ 
+<span class="k">def</span> <span class="nf">max_pool_2x2</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">max_pool</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="n">ksize</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">strides</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">padding</span><span class="o">=</span><span class="s">'SAME'</span><span class="p">)</span>
+ 
+<span class="c">## define a CNN</span>
+<span class="k">def</span> <span class="nf">CNN</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">reg</span><span class="p">,</span><span class="n">keep_prob</span><span class="p">,</span><span class="n">Dropout</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+ 
+    <span class="n">x_fold</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">,[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+ 
+    <span class="c">## init filters</span>
+    <span class="n">Wconv1</span> <span class="o">=</span> <span class="n">init_weight</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">32</span><span class="p">])</span>
+    <span class="n">Bconv1</span> <span class="o">=</span> <span class="n">init_bias</span><span class="p">([</span><span class="mi">32</span><span class="p">])</span>
+ 
+    <span class="c">## init weight and bias</span>
+    <span class="n">Wfc1</span> <span class="o">=</span> <span class="n">init_weight</span><span class="p">([</span><span class="mi">7</span><span class="o">*</span><span class="mi">7</span><span class="o">*</span><span class="mi">32</span><span class="p">,</span><span class="mi">1024</span><span class="p">])</span>
+    <span class="n">Bfc1</span> <span class="o">=</span> <span class="n">init_bias</span><span class="p">([</span><span class="mi">1024</span><span class="p">])</span>
+    <span class="n">Wfc2</span> <span class="o">=</span> <span class="n">init_weight</span><span class="p">([</span><span class="mi">1024</span><span class="p">,</span><span class="mi">10</span><span class="p">])</span>
+    <span class="n">Bfc2</span> <span class="o">=</span> <span class="n">init_bias</span><span class="p">([</span><span class="mi">10</span><span class="p">])</span>
+ 
+    <span class="c">## two layer nn</span>
+    <span class="n">a1</span> <span class="o">=</span> <span class="p">(</span><span class="n">conv2d</span><span class="p">(</span><span class="n">x_fold</span><span class="p">,</span><span class="n">Wconv1</span><span class="p">)</span><span class="o">+</span><span class="n">Bconv1</span><span class="p">)</span> <span class="c">#conv1</span>
+    <span class="n">a2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">max_pool_2x2</span><span class="p">(</span><span class="n">a1</span><span class="p">))</span> <span class="c">#maxpool1</span>
+    <span class="k">if</span> <span class="n">Dropout</span><span class="p">:</span>
+        <span class="n">dropout</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">a2</span><span class="p">,</span> <span class="n">keep_prob</span><span class="o">=</span><span class="n">keep_prob</span><span class="p">),[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">7</span><span class="o">*</span><span class="mi">7</span><span class="o">*</span><span class="mi">32</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dropout</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">a2</span><span class="p">,[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">7</span><span class="o">*</span><span class="mi">7</span><span class="o">*</span><span class="mi">32</span><span class="p">])</span>
+    <span class="n">a3</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">dropout</span><span class="p">,</span><span class="n">Wfc1</span><span class="p">)</span><span class="o">+</span><span class="n">Bfc1</span> <span class="c">#full-connected 1</span>
+    <span class="n">logits</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">a3</span><span class="p">,</span><span class="n">Wfc2</span><span class="p">)</span><span class="o">+</span><span class="n">Bfc2</span> <span class="c"># fully-connected 2</span>
+ 
+    <span class="c">## get loss</span>
+    <span class="n">total_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">sparse_softmax_cross_entropy</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">y</span><span class="p">,</span><span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">)</span>
+    <span class="n">mean_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">total_loss</span><span class="p">)</span>
+    <span class="n">reg_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">Wfc1</span><span class="p">))</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">Wfc2</span><span class="p">))</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">mean_loss</span> <span class="o">+</span> <span class="n">reg</span> <span class="o">*</span> <span class="n">reg_loss</span>
+ 
+    <span class="c">##  get accuracy</span>
+    <span class="n">y_</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">acc</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">),</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">acc</span>
+</code></pre></div></div>
+
+<h3 id="6-deeper-cnn">6. deeper CNN</h3>
+<p>Go deeper with the CNN with additionaly conv &amp; pool layers:</p>
+
+<ul>
+  <li>conv layer: 32 5x5x1 filters</li>
+  <li>pool layer: 2×2 max pool</li>
+  <li>relu layer</li>
+  <li>conv layer: 64 5x5x1 filters</li>
+  <li>pool layer: 2×2 max pool</li>
+  <li>relu layer</li>
+  <li>densely connectd layer: affined to 1024 dimension</li>
+  <li>relu layer</li>
+  <li>readout layer: affined to 10 classes</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">deep_CNN</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">reg</span><span class="p">,</span><span class="n">keep_prob</span><span class="p">,</span><span class="n">Dropout</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+ 
+    <span class="n">x_fold</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">,[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+ 
+    <span class="c">## init filters</span>
+    <span class="n">Wconv1</span> <span class="o">=</span> <span class="n">init_weight</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">32</span><span class="p">])</span>
+    <span class="n">Bconv1</span> <span class="o">=</span> <span class="n">init_bias</span><span class="p">([</span><span class="mi">32</span><span class="p">])</span>
+    <span class="n">Wconv2</span> <span class="o">=</span> <span class="n">init_weight</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">32</span><span class="p">,</span><span class="mi">64</span><span class="p">])</span>
+    <span class="n">Bconv2</span> <span class="o">=</span> <span class="n">init_bias</span><span class="p">([</span><span class="mi">64</span><span class="p">])</span>
+ 
+    <span class="c">## init weight and bias</span>
+    <span class="n">Wfc1</span> <span class="o">=</span> <span class="n">init_weight</span><span class="p">([</span><span class="mi">2</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="mi">64</span><span class="p">,</span><span class="mi">1024</span><span class="p">])</span>
+    <span class="n">Bfc1</span> <span class="o">=</span> <span class="n">init_bias</span><span class="p">([</span><span class="mi">1024</span><span class="p">])</span>
+    <span class="n">Wfc2</span> <span class="o">=</span> <span class="n">init_weight</span><span class="p">([</span><span class="mi">1024</span><span class="p">,</span><span class="mi">10</span><span class="p">])</span>
+    <span class="n">Bfc2</span> <span class="o">=</span> <span class="n">init_bias</span><span class="p">([</span><span class="mi">10</span><span class="p">])</span>
+ 
+    <span class="c">## two layer nn</span>
+    <span class="n">a1</span> <span class="o">=</span> <span class="p">(</span><span class="n">conv2d</span><span class="p">(</span><span class="n">x_fold</span><span class="p">,</span><span class="n">Wconv1</span><span class="p">)</span><span class="o">+</span><span class="n">Bconv1</span><span class="p">)</span> <span class="c">#conv1</span>
+    <span class="n">a2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">max_pool_2x2</span><span class="p">(</span><span class="n">a1</span><span class="p">))</span> <span class="c">#maxpool1</span>
+    <span class="n">a3</span> <span class="o">=</span> <span class="p">(</span><span class="n">conv2d</span><span class="p">(</span><span class="n">a2</span><span class="p">,</span><span class="n">Wconv2</span><span class="p">)</span><span class="o">+</span><span class="n">Bconv2</span><span class="p">)</span> <span class="c">#conv1</span>
+    <span class="n">a4</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">max_pool_2x2</span><span class="p">(</span><span class="n">a3</span><span class="p">))</span> <span class="c">#maxpool1</span>
+    <span class="n">a5</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">a4</span><span class="p">,[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="mi">64</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">Dropout</span><span class="p">:</span>
+        <span class="n">dropout</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">a5</span><span class="p">,</span><span class="n">keep_prob</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dropout</span> <span class="o">=</span> <span class="n">a5</span>
+    <span class="n">a6</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">dropout</span><span class="p">,</span><span class="n">Wfc1</span><span class="p">)</span><span class="o">+</span><span class="n">Bfc1</span><span class="p">)</span> <span class="c">#full-connected 1</span>
+    <span class="n">logits</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">a6</span><span class="p">,</span><span class="n">Wfc2</span><span class="p">)</span><span class="o">+</span><span class="n">Bfc2</span> <span class="c"># fully-connected 2</span>
+ 
+    <span class="c">## get loss</span>
+    <span class="n">total_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">sparse_softmax_cross_entropy</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">y</span><span class="p">,</span><span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">)</span>
+    <span class="n">mean_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">total_loss</span><span class="p">)</span>
+    <span class="n">reg_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">Wfc1</span><span class="p">))</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">Wfc2</span><span class="p">))</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">mean_loss</span> <span class="o">+</span> <span class="n">reg</span> <span class="o">*</span> <span class="n">reg_loss</span>
+ 
+    <span class="c">##  get accuracy</span>
+    <span class="n">y_</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">acc</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">),</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">acc</span>
+</code></pre></div></div>
+
+<h3 id="7-evaluate-the-models">7. Evaluate the Models</h3>
+
+<ul>
+  <li>DNN is fast and gives ~95.7% accuracy.</li>
+  <li>CNN is much slower due to proccessing of convolutional layers. Accuary is then improved to 96.2%.</li>
+  <li>deeper CNN furthur improved accuarcy to 98%.</li>
+</ul>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">run_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span><span class="n">X_train</span><span class="p">,</span><span class="n">Y_train</span><span class="p">,</span><span class="n">X_val</span><span class="p">,</span><span class="n">Y_val</span><span class="p">,</span><span class="n">lr</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span><span class="n">reg</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span><span class="n">dropout</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span><span class="n">keep_prob</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span><span class="n">maxIter</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span><span class="n">batchSize</span> <span class="o">=</span> <span class="mi">128</span><span class="p">):</span>
+ 
+    <span class="n">n</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">shape</span> <span class="c"># get train size </span>
+ 
+    <span class="c">## define placeholder (containers)</span>
+    <span class="c">## for features - x, label - y, regularization - reg</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="mi">784</span><span class="p">])</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">])</span>
+    <span class="n">keepProb</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+ 
+    <span class="c">## get loss, accuracy from specific model</span>
+    <span class="n">loss</span><span class="p">,</span> <span class="n">acc</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">reg</span><span class="p">,</span><span class="n">keepProb</span><span class="p">,</span><span class="n">dropout</span><span class="p">)</span>
+    <span class="c">## used AdamOptimizer(GradientDesenct Alternative)</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">AdamOptimizer</span><span class="p">(</span><span class="n">lr</span><span class="p">)</span>
+    <span class="n">train_step</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span> <span class="c"># objective - minimize loss function</span>
+ 
+    <span class="c">## populate loss/accuarcy history for plotting</span>
+    <span class="n">lossHistory</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">accHistory</span> <span class="o">=</span> <span class="p">[]</span>
+ 
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span> <span class="k">as</span> <span class="n">sess</span><span class="p">:</span>
+        <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">global_variables_initializer</span><span class="p">())</span>
+        <span class="k">print</span> <span class="p">(</span><span class="s">'Training'</span><span class="p">)</span>
+ 
+        <span class="c">## stochastic training with batchSize 128</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">maxIter</span><span class="p">):</span>
+            <span class="n">inTrain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">batchSize</span><span class="p">)</span>
+            <span class="n">batchX</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="n">inTrain</span><span class="p">,:]</span>
+            <span class="n">batchY</span> <span class="o">=</span> <span class="n">Y_train</span><span class="p">[</span><span class="n">inTrain</span><span class="p">]</span>
+            <span class="n">train_step</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="n">x</span><span class="p">:</span><span class="n">batchX</span><span class="p">,</span><span class="n">y</span><span class="p">:</span><span class="n">batchY</span><span class="p">,</span><span class="n">keepProb</span><span class="p">:</span><span class="n">keep_prob</span><span class="p">},</span><span class="n">session</span><span class="o">=</span><span class="n">sess</span><span class="p">)</span>
+ 
+            <span class="n">iterLoss</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="nb">eval</span><span class="p">(</span><span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="n">x</span><span class="p">:</span><span class="n">batchX</span><span class="p">,</span><span class="n">y</span><span class="p">:</span><span class="n">batchY</span><span class="p">,</span><span class="n">keepProb</span><span class="p">:</span><span class="mf">1.0</span><span class="p">},</span><span class="n">session</span><span class="o">=</span><span class="n">sess</span><span class="p">)</span>
+            <span class="n">iterAcc</span> <span class="o">=</span> <span class="n">acc</span><span class="o">.</span><span class="nb">eval</span><span class="p">(</span><span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="n">x</span><span class="p">:</span><span class="n">batchX</span><span class="p">,</span><span class="n">y</span><span class="p">:</span><span class="n">batchY</span><span class="p">,</span><span class="n">keepProb</span><span class="p">:</span><span class="mf">1.0</span><span class="p">},</span><span class="n">session</span><span class="o">=</span><span class="n">sess</span><span class="p">)</span>
+            <span class="n">lossHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">iterLoss</span><span class="p">)</span>
+            <span class="n">accHistory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">iterAcc</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span><span class="o">%</span><span class="mi">100</span> <span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="k">print</span> <span class="p">(</span><span class="s">'iter {0:2d}: loss {1:.3f} acc {2:.3f}'</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">iterLoss</span><span class="p">,</span> <span class="n">iterAcc</span><span class="p">)</span>
+ 
+        <span class="k">print</span><span class="p">(</span><span class="s">'Validation'</span><span class="p">)</span>
+        <span class="n">iterLoss</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="nb">eval</span><span class="p">(</span><span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="n">x</span><span class="p">:</span><span class="n">X_val</span><span class="p">,</span><span class="n">y</span><span class="p">:</span><span class="n">Y_val</span><span class="p">,</span><span class="n">keepProb</span><span class="p">:</span><span class="mf">1.0</span><span class="p">},</span><span class="n">session</span><span class="o">=</span><span class="n">sess</span><span class="p">)</span>
+        <span class="n">iterAcc</span> <span class="o">=</span> <span class="n">acc</span><span class="o">.</span><span class="nb">eval</span><span class="p">(</span><span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="n">x</span><span class="p">:</span><span class="n">X_val</span><span class="p">,</span><span class="n">y</span><span class="p">:</span><span class="n">Y_val</span><span class="p">,</span><span class="n">keepProb</span><span class="p">:</span><span class="mf">1.0</span><span class="p">},</span><span class="n">session</span><span class="o">=</span><span class="n">sess</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">'loss {0:.3f} acc {1:.3f}'</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">iterLoss</span><span class="p">,</span> <span class="n">iterAcc</span><span class="p">)</span>
+ 
+        <span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">lossPlot</span><span class="p">,</span><span class="n">accPlot</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">accPlot</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">accHistory</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="s">'go-'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">'accuracy'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">accPlot</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">"Batch Accuracy"</span><span class="p">)</span>
+        <span class="n">lossPlot</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">lossHistory</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="s">'bo-'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">'loss'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">lossPlot</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">"Batch Loss"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Let’s compare the performance for individual models:</p>
+
+<h4 id="1-dnn">1) DNN</h4>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">%</span><span class="n">time</span> <span class="n">run_model</span><span class="p">(</span><span class="n">DNN</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">Y_train</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">Y_val</span><span class="p">,</span><span class="n">maxIter</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Training
+iter 0:     loss 2.190 acc 0.273
+iter 100: loss 0.131 acc 0.945
+iter 200: loss 0.059 acc 0.977
+iter 300: loss 0.037 acc 0.984
+iter 400: loss 0.038 acc 0.984
+iter 500: loss 0.062 acc 0.969
+iter 600: loss 0.073 acc 0.977
+iter 700: loss 0.078 acc 0.984
+iter 800: loss 0.075 acc 0.977
+iter 900: loss 0.093 acc 0.977
+Validation
+loss 0.180 acc 0.957
+CPU times: user 54.7 s, sys: 3.86 s, total: 58.6 s Wall time: 20.2 s
+</code></pre></div></div>
+
+<p><img src="https://6chaoran.files.wordpress.com/2017/06/dnn_perf.png" alt="image" /></p>
+
+<h4 id="2-cnn">2) CNN</h4>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">%</span><span class="n">time</span> <span class="n">run_model</span><span class="p">(</span><span class="n">CNN</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">Y_train</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">Y_val</span><span class="p">,</span><span class="n">maxIter</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Training
+iter 0:     loss 2.299 acc 0.227
+iter 100: loss 0.111 acc 0.984
+iter 200: loss 0.063 acc 0.984
+iter 300: loss 0.168 acc 0.953
+iter 400: loss 0.012 acc 1.000
+iter 500: loss 0.049 acc 0.984
+iter 600: loss 0.047 acc 0.992
+iter 700: loss 0.070 acc 0.984
+iter 800: loss 0.072 acc 0.984
+iter 900: loss 0.040 acc 0.992
+Validation
+loss 0.145 acc 0.965
+CPU times: user 8min 19s, sys: 26.3 s, total: 8min 46s
+Wall time: 2min 37s
+</code></pre></div></div>
+
+<p><img src="https://6chaoran.files.wordpress.com/2017/06/cnn_perf.png" alt="image" /></p>
+
+<h4 id="3-deeper-cnn">3) deeper CNN</h4>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">%</span><span class="n">time</span> <span class="n">run_model</span><span class="p">(</span><span class="n">deep_CNN</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">Y_train</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">Y_val</span><span class="p">,</span><span class="n">maxIter</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Training
+iter 0:     loss 2.302 acc 0.133
+iter 100: loss 0.249 acc 0.922
+iter 200: loss 0.187 acc 0.953
+iter 300: loss 0.096 acc 0.969
+iter 400: loss 0.073 acc 0.977
+iter 500: loss 0.023 acc 0.992
+iter 600: loss 0.033 acc 0.984
+iter 700: loss 0.033 acc 0.984
+iter 800: loss 0.017 acc 0.992
+iter 900: loss 0.010 acc 1.000
+
+Validation
+loss 0.070 acc 0.980
+CPU times: user 5min 42s, sys: 34 s, total: 6min 16s
+Wall time: 2min 8s
+</code></pre></div></div>
+
+<p><img src="https://6chaoran.files.wordpress.com/2017/06/deep_cnn_perf.png" alt="image" /></p>
+
+<p>The post in ipython notebook on GitHub can be found <a href="https://github.com/6chaoran/DataStory/blob/master/kaggle-digits/kaggle_digit_tensorflow.ipynb">here</a></p>
+
+
+  </div>
+
+  <div class="date">
+    Written on June 27, 2017
+  </div>
+
+  
+</article>
+
+    </div>
+
+    <div class="wrapper-footer">
+      <div class="container">
+        <footer class="footer">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+        </footer>
+      </div>
+    </div>
+
+    
+
+  </body>
+</html>
